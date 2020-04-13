@@ -1,0 +1,142 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+
+public class JumpController : MonoBehaviour
+{
+
+    Rigidbody2D myrigidbody;
+    SpriteRenderer spriteRenderer;
+
+    [SerializeField]
+    private float power;
+
+    [SerializeField]
+    Transform pos;
+
+    [SerializeField]
+    float checkRadius;
+
+    [SerializeField]
+    LayerMask islayer;
+
+    public int jumpCount;
+
+    [SerializeField]
+    int jumpCnt;
+
+    public Animator animator;
+
+    bool isGround;
+    bool isOver = false;
+
+    void Awake()
+    {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+    }
+    // Start is called before the first frame update
+    private void Start()
+    {
+        animator = GetComponent<Animator>();
+        myrigidbody = GetComponent<Rigidbody2D>();
+        jumpCnt = jumpCount;
+    }
+
+    private void Update()
+    {
+
+        isGround = Physics2D.OverlapCircle(pos.position,checkRadius,islayer);
+        if (isGround==true&&Input.GetKeyDown(KeyCode.Space)&&jumpCnt>0)
+        {
+            myrigidbody.velocity = Vector2.up * power;
+        }
+        if (isGround == false && Input.GetKeyDown(KeyCode.Space) && jumpCnt > 0)
+        {
+            myrigidbody.velocity = Vector2.up * power;
+        }
+        if (Input.GetKeyUp(KeyCode.Space))
+        {
+            jumpCnt--;
+        }
+        if (isGround)
+        {
+            jumpCnt = jumpCount;
+        }
+    }
+    // Update is called once per frame
+    private void FixedUpdate()
+    {
+        float hor = Input.GetAxis("Horizontal");
+        myrigidbody.velocity = new Vector2(hor * 3, myrigidbody.velocity.y);
+
+        if (hor > 0)
+        {
+            animator.SetBool("Run", true);
+        }
+        else if (hor < 0)
+        {
+            animator.SetBool("Run", true);
+        }
+        else
+        {
+            animator.SetBool("Run", false);
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if(collision.gameObject.tag == "Enemy")
+            OnDamaged(collision.transform.position);
+
+    }
+
+    void OnDamaged(Vector2 targetPos)
+    {
+        gameObject.layer = 12;
+        
+        spriteRenderer.color = new Color(1, 1, 1,0.4f);
+        int dirc = transform.position.x - targetPos.x > 0 ? 1 : -1;
+        myrigidbody.AddForce(new Vector2(dirc, 1)*10, ForceMode2D.Impulse);
+        animator.SetBool("Die", true);
+
+        Invoke("OffDamaged",3);
+
+        //Time.timeScale = 0f;
+
+        Invoke("LoadRetry", 2);
+
+    }
+
+    void OffDamaged()
+    {
+        gameObject.layer = 11;
+        spriteRenderer.color = new Color(1, 1, 1, 1);
+        animator.SetBool("Die", false);
+
+    }
+
+    void LoadRetry()
+    {
+        SceneManager.LoadScene("2222");
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.tag == "GameOver")
+        {
+            isOver = true;
+            Invoke("GameOver", 1);
+  
+        }
+    }
+
+    void GameOver()
+    {
+        SceneManager.LoadScene("3333");
+    }
+
+
+
+}
